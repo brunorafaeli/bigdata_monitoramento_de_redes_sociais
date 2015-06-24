@@ -4,7 +4,7 @@
 		module="social-networks-monitor-alarm-idea-project-build"
 		revision="0.1-SNAPSHOT"
 		status="integration"
-		publication="20150613174908"
+		publication="20150623191639"
 		e:sbtVersion="0.13" e:scalaVersion="2.10"
 	>
 		<description>
