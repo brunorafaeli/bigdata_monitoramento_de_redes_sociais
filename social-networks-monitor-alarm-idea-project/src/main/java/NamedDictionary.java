@@ -12,33 +12,33 @@ import org.json.simple.parser.ParseException;
  * Created by Pedro on 14/06/2015.
  */
 public class NamedDictionary implements Serializable {
-        private String name;
-        private Set<String> terms;
+        private String cat_name;
+        private Set<String> cat_terms;
 
-    public NamedDictionary(String filepath) throws IOException, ParseException {
-        this.terms = new HashSet<String>();
+    public NamedDictionary(String JSONtext) throws IOException, ParseException {
+        this.cat_terms = new HashSet<String>();
 
         JSONParser parser = new JSONParser();
-        Object obj = parser.parse(new FileReader(filepath));
+        Object obj = parser.parse(JSONtext);
         JSONObject jsonObject = (JSONObject) obj;
-        this.name = (String) jsonObject.get("name");
+        this.cat_name = (String) jsonObject.get("cat_name");
 
         // loop array
-        JSONArray jsonterms = (JSONArray) jsonObject.get("terms");
+        JSONArray jsonterms = (JSONArray) jsonObject.get("cat_terms");
         Iterator<String> iterator = jsonterms.iterator();
         while (iterator.hasNext()) {
-            this.terms.add(iterator.next());
+            this.cat_terms.add(iterator.next());
         }
     }
 
-    public String getName() {
-        return name;
+    public String getCat_name() {
+        return cat_name;
     }
 
-    public Set<String> getTerms() {
-        return terms;
+    public Set<String> getCat_terms() {
+        return cat_terms;
     }
     public String[] getTermsArray() {
-        return terms.toArray(new String[terms.size()]);
+        return cat_terms.toArray(new String[cat_terms.size()]);
     }
 }

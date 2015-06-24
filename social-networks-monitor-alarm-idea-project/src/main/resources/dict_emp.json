@@ -1,0 +1,14 @@
+{
+  "name":"IBM",
+  "terms":["ibm","watson"],
+  "categories": [
+    {
+    "cat_name":"Positivo",
+    "cat_terms":["bom","rápido","barato"]
+    },
+    {
+    "cat_name":"Negativo",
+    "cat_terms":["ruim","lento","caro"]
+    }
+    ]
+}

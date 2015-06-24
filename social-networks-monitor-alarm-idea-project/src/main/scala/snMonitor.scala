@@ -22,7 +22,7 @@ object snMonitor {
     System.setProperty("twitter4j.oauth.consumerSecret", consumerSecret)
     System.setProperty("twitter4j.oauth.accessToken", accessToken)
     System.setProperty("twitter4j.oauth.accessTokenSecret", accessTokenSecret)
-    val dictCompany = new NamedDictionary("C:\\devel\\bigdata\\bigdata_monitoramento_de_redes_sociais\\social-networks-monitor-alarm-idea-project\\src\\main\\resources\\dict_ibm.json")
+    val dictCompany = new Empresa("/home/berne/IdeaProjects/bigdata_monitoramento_de_redes_sociais/social-networks-monitor-alarm-idea-project/src/main/resources/dict_emp.json")
     val filters = dictCompany.getTermsArray
     val conf = new SparkConf()
       .setMaster("local[2]")
@@ -32,12 +32,21 @@ object snMonitor {
     val twstream = TwitterUtils.createStream(ssc, None, filters)
     val twcollector = twstream.map(status => (dictCompany.getName,status.getText))
 
+
     //unifiedStream will aggregate all input streams in the future
    // val unifiedStream = tw_txt.union()
     val unifiedStream = twcollector
     val words = unifiedStream.flatMapValues(_.toLowerCase.split(" "))
 
+    //gets categories
+    //val wordCategories = dictCompany.wordCategory()
+
     val pairs = words.map({case (company,word) => ((company,word), 1.0)})
+
+    val categories = words.map({case (company, word) => (dictCompany.wordCategory(word), 1.0)})
+    val categoryCounts = categories.reduceByKey(_+_)
+    categoryCounts.print()
+
     val wordCounts = pairs.reduceByKey(_+_)
     val wordCountsHistoricWindow = wordCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
     val wordCountsRecentWindow = wordCounts.window(Minutes(RECENTICINTERVAL), Seconds(15)).groupByKey
