@@ -14,6 +14,7 @@ object snMonitor {
     val HISTORICINTERVAL = 5
     val RECENTICINTERVAL= 2
     val Array(consumerKey, consumerSecret, accessToken, accessTokenSecret) = args.take(4)
+    val dictfilenm = args(4)
     //val filters = args.takeRight(args.length - 4)
 
     // Set the system properties so that Twitter4j library used by twitter stream
@@ -22,7 +23,7 @@ object snMonitor {
     System.setProperty("twitter4j.oauth.consumerSecret", consumerSecret)
     System.setProperty("twitter4j.oauth.accessToken", accessToken)
     System.setProperty("twitter4j.oauth.accessTokenSecret", accessTokenSecret)
-    val dictCompany = new Empresa("/home/berne/IdeaProjects/bigdata_monitoramento_de_redes_sociais/social-networks-monitor-alarm-idea-project/src/main/resources/dict_emp.json")
+    val dictCompany = new Empresa(dictfilenm)
     val filters = dictCompany.getTermsArray
     val conf = new SparkConf()
       .setMaster("local[2]")
@@ -37,29 +38,33 @@ object snMonitor {
    // val unifiedStream = tw_txt.union()
     val unifiedStream = twcollector
     val words = unifiedStream.flatMapValues(_.toLowerCase.split(" "))
-
     //gets categories
     //val wordCategories = dictCompany.wordCategory()
-
+    unifiedStream.print()
     val pairs = words.map({case (company,word) => ((company,word), 1.0)})
 
-    val categories = words.map({case (company, word) => (dictCompany.wordCategory(word), 1.0)})
+    val categories = words.flatMap({case (company, word) => (dictCompany.wordCategory(word)).map(cat => ((company, cat),1.0))})
     val categoryCounts = categories.reduceByKey(_+_)
-    categoryCounts.print()
-
-    val wordCounts = pairs.reduceByKey(_+_)
-    val wordCountsHistoricWindow = wordCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
-    val wordCountsRecentWindow = wordCounts.window(Minutes(RECENTICINTERVAL), Seconds(15)).groupByKey
-    val historicStat = wordCountsHistoricWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
-    val recentStat = wordCountsRecentWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
+    val categoryCountsHistoricWindow = categoryCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
+    val categoryCountsRecentWindow = categoryCounts.window(Minutes(RECENTICINTERVAL), Seconds(15)).groupByKey
+    val historicStat = categoryCountsHistoricWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
+    val recentStat = categoryCountsRecentWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
     val stats = historicStat.join(recentStat)
+
+    //val wordCounts = pairs.reduceByKey(_+_)
+    //val wordCountsHistoricWindow = wordCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
+    //val wordCountsRecentWindow = wordCounts.window(Minutes(RECENTICINTERVAL), Seconds(15)).groupByKey
+    //val historicStat = wordCountsHistoricWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
+    //val recentStat = wordCountsRecentWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
+    //val stats = historicStat.join(recentStat)
 
     // Print the first ten elements of each RDD generated in this DStream to the console
     //wordCounts.print()
     //unifiedStream.print()
     //historicStat.print()
     //recentStat.print()
-    val s = stats.foreachRDD(value =>print(value))
+    //val s = stats.foreachRDD(value =>print(value))
+    stats.foreachRDD(rdd => rdd.foreach(rdd => println(rdd.toString())))
     ssc.start()
     ssc.awaitTermination()
   }

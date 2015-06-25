@@ -1,6 +1,6 @@
 {
   "name":"IBM",
-  "terms":["ibm","watson"],
+  "terms":["ibm"],
   "categories": [
     {
     "cat_name":"Positivo",
@@ -9,6 +9,17 @@
     {
     "cat_name":"Negativo",
     "cat_terms":["ruim","lento","caro"]
+    },
+    {
+      "cat_name":"Cognitive",
+      "cat_terms":["watson","cognitive"]
+    },
+    {
+      "cat_name":"Products",
+      "cat_terms":[
+        "thinkpad","streamings","lotus","websphere","tivoli","db2","softlayer","bluemix","analytics","bigdata","cloud",
+        "IBMBluemix","#bigdata","#cloudcomputing","@IBMSoftware","@IBMbigdata","Supercomputer"
+      ]
     }
     ]
 }
