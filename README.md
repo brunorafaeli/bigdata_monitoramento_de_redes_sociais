@@ -16,3 +16,7 @@ In IntelliJ IDEA:
   - Download SBT source and docs
 - Select Project sdk = 1.8
 - Click Finish
+
+## Run
+
+spark-submit --master local[4] social-networks-monitor-alarm-idea-project.jar consumerKey consumerSecret accessToken accessTokenSecret dictfilenm outdir
