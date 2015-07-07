@@ -26,17 +26,19 @@ object snMonitor {
     val dictCompany = new Company(dictfilenm)
     val filters = dictCompany.getTermsArray
     val conf = new SparkConf()
-      .setMaster("local[2]")
+      .setMaster("local[3]")
       .setAppName("snMonitor Application")
     val ssc = new StreamingContext(conf, Seconds(15))
     //val lines = ssc.socketTextStream("localhost", 9999)
+    val stubstream = ssc.socketTextStream("localhost", 9999)
+    val stubcollector = stubstream.map(text => (dictCompany.getName,text))
     val twstream = TwitterUtils.createStream(ssc, None, filters)
     val twcollector = twstream.map(status => (dictCompany.getName,status.getText))
 
 
     //unifiedStream will aggregate all input streams in the future
    // val unifiedStream = tw_txt.union()
-    val unifiedStream = twcollector
+    val unifiedStream = twcollector.union(stubcollector)
     val words = unifiedStream.flatMapValues(_.toLowerCase.split(" "))
     //gets categories
     //val wordCategories = dictCompany.wordCategory()
