@@ -5,6 +5,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import scala.Tuple2;
 
 /**
  * Created by berne on 23/06/15.
@@ -86,5 +87,16 @@ public class Company implements Serializable {
             return wordmap.get(word).toArray(new String[wordmap.get(word).size()]);
         }
         return new String[0];
+    }
+    public List<Tuple2<Tuple2<String,String>, Double>> categoryTuples() {
+        List<Tuple2<Tuple2<String,String>, Double>> batch = new ArrayList<>();
+        Tuple2<Tuple2<String,String>, Double> t;
+        for (NamedDictionary cat : this.categories) {
+            String catname = cat.getCat_name();
+            Tuple2<String, String> x = new Tuple2<String, String>(this.name, catname);
+            t = new Tuple2<Tuple2<String, String>, Double>(x, 0.0);
+            batch.add(t);
+        }
+        return batch;
     }
 }

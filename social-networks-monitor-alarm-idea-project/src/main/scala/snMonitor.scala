@@ -4,10 +4,16 @@
 /* snMonitor.scala */
 
 import org.apache.spark.SparkContext._
-import org.apache.spark.SparkConf
+import org.apache.spark.api.java.JavaSparkContext
+import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.twitter._
+import scala.collection
 import scala.collection.JavaConversions._
+import scala.collection.parallel.mutable
+import scala.collection.mutable
+import scala.collection.mutable.Queue
 
 object snMonitor {
   def main(args: Array[String]) {
@@ -28,7 +34,8 @@ object snMonitor {
     val conf = new SparkConf()
       .setMaster("local[2]")
       .setAppName("snMonitor Application")
-    val ssc = new StreamingContext(conf, Seconds(15))
+    val sc = new SparkContext(conf)
+    val ssc = new StreamingContext(sc, Seconds(15))
     //val lines = ssc.socketTextStream("localhost", 9999)
     val twstream = TwitterUtils.createStream(ssc, None, filters)
     val twcollector = twstream.map(status => (dictCompany.getName,status.getText))
@@ -42,9 +49,24 @@ object snMonitor {
     //val wordCategories = dictCompany.wordCategory()
     unifiedStream.print()
     val pairs = words.map({case (company,word) => ((company,word), 1.0)})
-
     val categories = words.flatMap({case (company, word) => (dictCompany.wordCategory(word)).map(cat => ((company, cat),1.0))})
-    val categoryCounts = categories.reduceByKey(_+_)
+
+    //Gets tuples with a 0.0 for each category
+    val catTuples = dictCompany.categoryTuples()
+
+    //Converts from Java to Scala format
+    var list = List[Tuple2[Tuple2[String, String], Double]]()
+    for (tup <- catTuples) {
+      var scalaTup = ((tup._1._1, tup._1._2), tup._2.doubleValue)
+      list = scalaTup :: list
+    }
+    //Transforms the list of tuples into an RDD
+    val zerosRDD = sc.parallelize(list)
+
+    //Creates a union between categories and zerosRDD
+    val categoriesWithZeros = categories.transform(rdd => rdd.union(zerosRDD))
+
+    val categoryCounts = categoriesWithZeros.reduceByKey(_+_)
     val categoryCountsHistoricWindow = categoryCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
     val categoryCountsRecentWindow = categoryCounts.window(Minutes(RECENTICINTERVAL), Seconds(15)).groupByKey
     val historicStat = categoryCountsHistoricWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
@@ -65,7 +87,8 @@ object snMonitor {
     //historicStat.print()
     //recentStat.print()
     //val s = stats.foreachRDD(value =>print(value))
-    stats.foreachRDD(rdd => rdd.foreach(rdd => println(rdd.toString())))
+    //stats.foreachRDD(rdd => rdd.foreach(rdd => println(rdd.toString())))
+
     ssc.start()
     ssc.awaitTermination()
   }
