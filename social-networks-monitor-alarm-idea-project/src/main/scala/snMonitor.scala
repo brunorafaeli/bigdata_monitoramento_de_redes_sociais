@@ -46,7 +46,8 @@ object snMonitor {
     //unifiedStream aggregates all input streams
    // val unifiedStream = tw_txt.union()
     val unifiedStream = twcollector.union(stubcollector)
-    val words = unifiedStream.flatMapValues(_.toLowerCase.split(" "))
+    val words = unifiedStream.flatMapValues(_.toLowerCase.split("[^a-zA-Z0-9@#-]"))
+    words.print()
     //gets categories
     //val wordCategories = dictCompany.wordCategory()
     unifiedStream.print()

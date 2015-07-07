@@ -27,7 +27,7 @@ public class NamedDictionary implements Serializable {
         JSONArray jsonterms = (JSONArray) jsonObject.get("cat_terms");
         Iterator<String> iterator = jsonterms.iterator();
         while (iterator.hasNext()) {
-            this.cat_terms.add(iterator.next());
+            this.cat_terms.add(iterator.next().toLowerCase());
         }
     }
 
