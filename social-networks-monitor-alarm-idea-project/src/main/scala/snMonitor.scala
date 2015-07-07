@@ -11,8 +11,8 @@ import scala.collection.JavaConversions._
 
 object snMonitor {
   def main(args: Array[String]) {
-    val HISTORICINTERVAL = 5
-    val RECENTICINTERVAL= 2
+    val HISTORICINTERVAL = 10
+    val RECENTICINTERVAL= 5
     val Array(consumerKey, consumerSecret, accessToken, accessTokenSecret) = args.take(4)
     val dictfilenm = args(4)
     //val filters = args.takeRight(args.length - 4)
@@ -23,7 +23,7 @@ object snMonitor {
     System.setProperty("twitter4j.oauth.consumerSecret", consumerSecret)
     System.setProperty("twitter4j.oauth.accessToken", accessToken)
     System.setProperty("twitter4j.oauth.accessTokenSecret", accessTokenSecret)
-    val dictCompany = new Empresa(dictfilenm)
+    val dictCompany = new Company(dictfilenm)
     val filters = dictCompany.getTermsArray
     val conf = new SparkConf()
       .setMaster("local[2]")
@@ -50,6 +50,7 @@ object snMonitor {
     val historicStat = categoryCountsHistoricWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
     val recentStat = categoryCountsRecentWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
     val stats = historicStat.join(recentStat)
+    stats.print()
 
     //val wordCounts = pairs.reduceByKey(_+_)
     //val wordCountsHistoricWindow = wordCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey

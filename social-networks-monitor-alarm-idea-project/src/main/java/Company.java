@@ -10,13 +10,13 @@ import org.json.simple.parser.ParseException;
  * Created by berne on 23/06/15.
  */
 
-public class Empresa implements Serializable {
+public class Company implements Serializable {
     private String name;
     private Set<String> terms;
     private List<NamedDictionary> categories;
     private Map<String, List<String>> wordmap;
 
-    public Empresa(String filepath) throws IOException, ParseException {
+    public Company(String filepath) throws IOException, ParseException {
         this.terms = new HashSet<String>();
         this.categories = new ArrayList<NamedDictionary>();
         this.wordmap = new HashMap<String, List<String>>();
