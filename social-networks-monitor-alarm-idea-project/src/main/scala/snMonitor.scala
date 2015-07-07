@@ -5,6 +5,7 @@
 
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
+import org.apache.spark.api.java.function.Function2
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.twitter._
 import scala.collection.JavaConversions._
@@ -15,6 +16,7 @@ object snMonitor {
     val RECENTICINTERVAL= 5
     val Array(consumerKey, consumerSecret, accessToken, accessTokenSecret) = args.take(4)
     val dictfilenm = args(4)
+    val outdir = args(5)
     //val filters = args.takeRight(args.length - 4)
 
     // Set the system properties so that Twitter4j library used by twitter stream
@@ -47,12 +49,14 @@ object snMonitor {
 
     val categories = words.flatMap({case (company, word) => (dictCompany.wordCategory(word)).map(cat => ((company, cat),1.0))})
     val categoryCounts = categories.reduceByKey(_+_)
+    val countWriter = new CountWriter(outdir)
+    categoryCounts.foreachRDD((rdd,time) =>  countWriter.appendCategoryCount(rdd.collect(),time))
     val categoryCountsHistoricWindow = categoryCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
     val categoryCountsRecentWindow = categoryCounts.window(Minutes(RECENTICINTERVAL), Seconds(15)).groupByKey
     val historicStat = categoryCountsHistoricWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
     val recentStat = categoryCountsRecentWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
     val stats = historicStat.join(recentStat)
-    stats.print()
+    //stats.print()
 
     //val wordCounts = pairs.reduceByKey(_+_)
     //val wordCountsHistoricWindow = wordCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
