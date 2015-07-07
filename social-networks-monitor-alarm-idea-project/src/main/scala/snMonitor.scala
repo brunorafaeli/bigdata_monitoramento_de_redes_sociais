@@ -7,13 +7,10 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.api.java.function.Function2
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.twitter._
-import scala.collection
 import scala.collection.JavaConversions._
-import scala.collection.parallel.mutable
-import scala.collection.mutable
-import scala.collection.mutable.Queue
 
 object snMonitor {
   def main(args: Array[String]) {
@@ -21,6 +18,7 @@ object snMonitor {
     val RECENTICINTERVAL= 5
     val Array(consumerKey, consumerSecret, accessToken, accessTokenSecret) = args.take(4)
     val dictfilenm = args(4)
+    val outdir = args(5)
     //val filters = args.takeRight(args.length - 4)
 
     // Set the system properties so that Twitter4j library used by twitter stream
@@ -32,18 +30,22 @@ object snMonitor {
     val dictCompany = new Company(dictfilenm)
     val filters = dictCompany.getTermsArray
     val conf = new SparkConf()
-      .setMaster("local[2]")
+      .setMaster("local[3]")
       .setAppName("snMonitor Application")
     val sc = new SparkContext(conf)
     val ssc = new StreamingContext(sc, Seconds(15))
-    //val lines = ssc.socketTextStream("localhost", 9999)
+    
+    //Stub Configurations
+    val stubstream = ssc.socketTextStream("localhost", 9999)
+    val stubcollector = stubstream.map(text => (dictCompany.getName,text))
+    //Twitter Configurations
     val twstream = TwitterUtils.createStream(ssc, None, filters)
     val twcollector = twstream.map(status => (dictCompany.getName,status.getText))
 
 
-    //unifiedStream will aggregate all input streams in the future
+    //unifiedStream aggregates all input streams
    // val unifiedStream = tw_txt.union()
-    val unifiedStream = twcollector
+    val unifiedStream = twcollector.union(stubcollector)
     val words = unifiedStream.flatMapValues(_.toLowerCase.split(" "))
     //gets categories
     //val wordCategories = dictCompany.wordCategory()
@@ -67,12 +69,16 @@ object snMonitor {
     val categoriesWithZeros = categories.transform(rdd => rdd.union(zerosRDD))
 
     val categoryCounts = categoriesWithZeros.reduceByKey(_+_)
+    
+    val countWriter = new CountWriter(outdir)
+    categoryCounts.foreachRDD((rdd,time) =>  countWriter.appendCategoryCount(rdd.collect(),time))
+    
     val categoryCountsHistoricWindow = categoryCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
     val categoryCountsRecentWindow = categoryCounts.window(Minutes(RECENTICINTERVAL), Seconds(15)).groupByKey
     val historicStat = categoryCountsHistoricWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
     val recentStat = categoryCountsRecentWindow.mapValues( value => org.apache.spark.util.StatCounter(value))
     val stats = historicStat.join(recentStat)
-    stats.print()
+    //stats.print()
 
     //val wordCounts = pairs.reduceByKey(_+_)
     //val wordCountsHistoricWindow = wordCounts.window(Minutes(HISTORICINTERVAL), Seconds(15)).groupByKey
@@ -87,8 +93,7 @@ object snMonitor {
     //historicStat.print()
     //recentStat.print()
     //val s = stats.foreachRDD(value =>print(value))
-    //stats.foreachRDD(rdd => rdd.foreach(rdd => println(rdd.toString())))
-
+    stats.foreachRDD(rdd => rdd.foreach(rdd => println(rdd.toString())))
     ssc.start()
     ssc.awaitTermination()
   }
