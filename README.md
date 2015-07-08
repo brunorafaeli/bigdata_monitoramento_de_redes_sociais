@@ -23,7 +23,7 @@ spark-submit --master local[4] social-networks-monitor-alarm-idea-project.jar co
 
 ##Generate Dataset
 <p><b>Command to run:</b> python generate_dataset.py</p>
-  <p>Line 12 - Decide the number of lines of dataset</p>
+  <p>Line 12 - Decide the number of dataset lines</p>
   <p>Line 13 - Decide when the script will influence on dataset </p>
 
 ##Simulate Twittes 
