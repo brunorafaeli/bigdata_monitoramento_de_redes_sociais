@@ -18,8 +18,24 @@ In IntelliJ IDEA:
 - Click Finish
 
 ## Run
-
-spark-submit --master local[4] social-networks-monitor-alarm-idea-project.jar consumerKey consumerSecret accessToken accessTokenSecret dictfilenm outdir
+```sh
+spark-submit --master local[4] social-networks-monitor-alarm-idea-project.jar \
+consumerKey consumerSecret accessToken accessTokenSecret \
+dictfilenm \ 
+outdir \
+historicinterval \
+recenticinterval \
+stubport \
+limit_stdev_cof \
+```
+Parameters:
+- `consumerKey` `consumerSecret` `accessToken` `accessTokenSecret`  - Twitter Tokens
+- `dictfilenm` - File path of a dictionary with company's categories terms
+- `outdir` - Directory where output files will be placed
+- `historicinterval` - Historical interval in minutes (int)
+- `recenticinterval` - Recent interval in minutes (int)
+- `stubport` - Port number where stub stream will be listening.Set *0* to disable (int)  
+- `limit_stdev_cof`- Coefficient of historic stdev to trigger alarm  (float)
 
 ##Generate Dataset
 <p><b>Command to run:</b> python generate_dataset.py</p>
