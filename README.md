@@ -22,14 +22,16 @@ In IntelliJ IDEA:
 spark-submit --master local[4] social-networks-monitor-alarm-idea-project.jar consumerKey consumerSecret accessToken accessTokenSecret dictfilenm outdir
 
 ##Generate Dataset
-Command to run : python generate_dataset.py
+<p><b>Command to run:</b> python generate_dataset.py</p>
+  <p>Line 12 - Decide the number of lines of dataset</p>
+  <p>Line 13 - Decide when the script will influence on dataset </p>
 
 ##Simulate Twittes 
-Command to run : python simulate_twittes.py
-Line 8 - Decide the number of lines to read before the sleep command
-Line 21 - Decide how long it will wait until the next reading
+<p><b>Command to run:</b> python simulate_twittes.py</p>
+  <p>Line 8 - Decide the number of lines to read before the sleep command</p>
+  <p>Line 21 - Decide how long it will wait until the next reading</p>
 
 ##Generate Graph
-Command to run : python graph.py
+<p><b>Command to run:</b> python graph.py</p>
 
 
